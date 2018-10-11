@@ -36,7 +36,7 @@ int main(int argc, char *argv[]) {
 
   int list[MAX];
   int size = MAX/numprocs;
-	int buffer[size];
+  int buffer[size];
   int rank_list[size];
   int all_rank_list[MAX];
   int sort_list[MAX];
