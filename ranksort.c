@@ -18,15 +18,15 @@ void shuffle(int *array, size_t n) {
 
 int main(int argc, char *argv[]) {
   int MAX;
-  int i,j,myid,numprocs;
+  int i,j,rank,numprocs;
   double t1, t2;
 
   MPI_Init(&argc, &argv);
   MPI_Comm_size(MPI_COMM_WORLD,&numprocs);
-  MPI_Comm_rank(MPI_COMM_WORLD,&myid);
+  MPI_Comm_rank(MPI_COMM_WORLD,&rank);
   MPI_Status status;
 
-  if(myid == 0) {
+  if(rank == 0) {
     printf("Number of Elements: ");
     fflush(stdout);
     scanf("%d", &MAX);
@@ -34,51 +34,57 @@ int main(int argc, char *argv[]) {
 
   MPI_Bcast((void*)&MAX, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-  int list[MAX];
-  int buffer[MAX/numprocs];
-  int rank_list[MAX/numprocs];
+	int list[MAX];
+  int size = MAX/numprocs;
+	int buffer[size];
+  int rank_list[size];
   int all_rank_list[MAX];
   int sort_list[MAX];
 
-  for(i = 0; i < MAX/numprocs; i++) {
-    rank_list[i] = 0;
-    sort_list[i] = 0;
-  }
-
-  if (myid == 0) {
-    for(i=0; i<MAX; i++)
+	if (rank == 0) {
+    for(i = 0; i < MAX; i++) {
       list[i] = i;
-    shuffle(list,MAX);
-    t1 = MPI_Wtime();
-  }
+		}
 
-  MPI_Bcast(
-    (void*)list, MAX, MPI_INT, 0, MPI_COMM_WORLD
-  );
-  MPI_Scatter(
-    (void*)list, MAX/numprocs,MPI_INT,
-    (void*)buffer, MAX/numprocs, MPI_INT, 0, MPI_COMM_WORLD
-  );
+		shuffle(list, MAX);
+	}
 
-  int position;
-  for(i = 0; i < MAX/numprocs; i++) {
+  MPI_Bcast((void*)list, MAX, MPI_INT, 0, MPI_COMM_WORLD);
+
+	int position;
+	int start = rank * size;
+	int end = start + size;
+	int index = 0;
+
+  t1 = MPI_Wtime();
+	for(i = start; i < end; i++) {
     position = 0;
     for(j = 0; j < MAX; j++) {
-      if(buffer[i] > list[j]) position++;
+      if(list[i] > list[j]) position++;
     }
-    rank_list[i] = position;
+    rank_list[index++] = position;
   }
 
-  MPI_Gather(
-    (void*)rank_list, MAX/numprocs, MPI_INT,
-    (void*)all_rank_list, MAX/numprocs, MPI_INT, 0, MPI_COMM_WORLD
+	t2 = MPI_Wtime();
+	double spent = t2 - t1;
+	double time;
+	MPI_Reduce(&spent, &time, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+
+	MPI_Gather(
+    (void*)rank_list, size, MPI_INT,
+    (void*)all_rank_list, size, MPI_INT, 0, MPI_COMM_WORLD
   );
 
-  if(myid == 0) {
+  if(rank == 0) {
     for(i = 0; i < MAX; i++)
       sort_list[all_rank_list[i]] = list[i];
-    t2 = MPI_Wtime();
-    printf("Time spent: %.3f sec\n",t2-t1);
+
+ 		t2 = MPI_Wtime();
+		for(i = 0; i < MAX; i++) {
+			printf("%d ", sort_list[i]);
+		}
+
+    printf("\nTime spent: %f sec\n", time);
   }
 
   MPI_Finalize();
