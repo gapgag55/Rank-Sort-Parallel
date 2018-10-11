@@ -20,11 +20,11 @@ int main(int argc, char *argv[]) {
   int MAX;
   int i,j,rank,numprocs;
   double t1, t2;
+	double spent, time;
 
   MPI_Init(&argc, &argv);
   MPI_Comm_size(MPI_COMM_WORLD,&numprocs);
   MPI_Comm_rank(MPI_COMM_WORLD,&rank);
-  MPI_Status status;
 
   if(rank == 0) {
     printf("Number of Elements: ");
@@ -41,7 +41,7 @@ int main(int argc, char *argv[]) {
   int all_rank_list[MAX];
   int sort_list[MAX];
 
-	if (rank == 0) {
+  if (rank == 0) {
     for(i = 0; i < MAX; i++) {
       list[i] = i;
     }
@@ -57,6 +57,7 @@ int main(int argc, char *argv[]) {
   int index = 0;
 
   t1 = MPI_Wtime();
+
   for(i = start; i < end; i++) {
     position = 0;
     for(j = 0; j < MAX; j++) {
@@ -66,25 +67,25 @@ int main(int argc, char *argv[]) {
   }
 
   t2 = MPI_Wtime();
-  double spent = t2 - t1;
-  double time;
-  MPI_Reduce(&spent, &time, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+  //printf("Time spent: %f\n", t2-t1);
+  //spent = t2 - t1;
 
   MPI_Gather(
     (void*)rank_list, size, MPI_INT,
     (void*)all_rank_list, size, MPI_INT, 0, MPI_COMM_WORLD
   );
 
+  spent = t2 - t1;
+  MPI_Reduce(&spent, &time, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+
   if(rank == 0) {
     for(i = 0; i < MAX; i++)
       sort_list[all_rank_list[i]] = list[i];
 
-    t2 = MPI_Wtime();
-    for(i = 0; i < MAX; i++) {
-      printf("%d ", sort_list[i]);
-    }
-
-    printf("\nTime spent: %f sec\n", time);
+	//	for(i = 0; i < MAX; i++) {
+	//		printf("%d ", sort_list[i]);
+	//	}
+		printf("\nTime spent: %f sec\n", time);
   }
 
   MPI_Finalize();
