@@ -34,7 +34,7 @@ int main(int argc, char *argv[]) {
 
   MPI_Bcast((void*)&MAX, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-	int list[MAX];
+  int list[MAX];
   int size = MAX/numprocs;
 	int buffer[size];
   int rank_list[size];
@@ -44,20 +44,20 @@ int main(int argc, char *argv[]) {
 	if (rank == 0) {
     for(i = 0; i < MAX; i++) {
       list[i] = i;
-		}
+    }
 
-		shuffle(list, MAX);
-	}
+    shuffle(list, MAX);
+  }
 
   MPI_Bcast((void*)list, MAX, MPI_INT, 0, MPI_COMM_WORLD);
 
-	int position;
-	int start = rank * size;
-	int end = start + size;
-	int index = 0;
+  int position;
+  int start = rank * size;
+  int end = start + size;
+  int index = 0;
 
   t1 = MPI_Wtime();
-	for(i = start; i < end; i++) {
+  for(i = start; i < end; i++) {
     position = 0;
     for(j = 0; j < MAX; j++) {
       if(list[i] > list[j]) position++;
@@ -66,11 +66,11 @@ int main(int argc, char *argv[]) {
   }
 
 	t2 = MPI_Wtime();
-	double spent = t2 - t1;
-	double time;
-	MPI_Reduce(&spent, &time, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+  double spent = t2 - t1;
+  double time;
+  MPI_Reduce(&spent, &time, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
-	MPI_Gather(
+  MPI_Gather(
     (void*)rank_list, size, MPI_INT,
     (void*)all_rank_list, size, MPI_INT, 0, MPI_COMM_WORLD
   );
@@ -79,10 +79,10 @@ int main(int argc, char *argv[]) {
     for(i = 0; i < MAX; i++)
       sort_list[all_rank_list[i]] = list[i];
 
- 		t2 = MPI_Wtime();
-		for(i = 0; i < MAX; i++) {
-			printf("%d ", sort_list[i]);
-		}
+    t2 = MPI_Wtime();
+    for(i = 0; i < MAX; i++) {
+      printf("%d ", sort_list[i]);
+    }
 
     printf("\nTime spent: %f sec\n", time);
   }
