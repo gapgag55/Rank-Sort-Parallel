@@ -65,7 +65,7 @@ int main(int argc, char *argv[]) {
     rank_list[index++] = position;
   }
 
-	t2 = MPI_Wtime();
+  t2 = MPI_Wtime();
   double spent = t2 - t1;
   double time;
   MPI_Reduce(&spent, &time, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
